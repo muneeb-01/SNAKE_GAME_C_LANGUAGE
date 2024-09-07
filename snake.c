@@ -5,21 +5,22 @@
 #include <ctype.h>
 #include <windows.h>
 #include <process.h>
+#include <string.h>
 
 #define UP 72
 #define DOWN 80
 #define LEFT 75
 #define RIGHT 77
 
-int length;
-int bend_no;
-int len;
+int length = 5;
+int bend_no = 0;
+int len = 0;
 char key;
-int life;
+int life = 3;
 
 void record();
 void load();
-void Delay(long double);
+void Delay();
 void Move();
 void Food();
 int Score();
@@ -48,33 +49,16 @@ coordinate head, bend[500], food, body[30];
 
 int main()
 {
-
-    char key;
-
     Print();
-
     system("cls");
-
     load();
 
-    length = 5;
-
     head.x = 25;
-
     head.y = 20;
-
     head.direction = RIGHT;
-
-    Boarder();
-
-    Food();
-
-    life = 3;
-
     bend[0] = head;
 
     Move();
-
     return 0;
 }
 
@@ -90,19 +74,7 @@ void Move()
 
         len = 0;
 
-        for (i = 0; i < 30; i++)
-        {
-
-            body[i].x = 0;
-
-            body[i].y = 0;
-
-            if (i == length)
-
-                break;
-        }
-
-        Delay(length);
+        Delay();
 
         Boarder();
 
@@ -127,17 +99,13 @@ void Move()
     } while (!kbhit());
 
     a = getch();
-
     if (a == 27)
-
     {
-
         system("cls");
-
         exit(0);
     }
-    key = getch();
 
+    key = getch();
     if ((key == RIGHT && head.direction != LEFT && head.direction != RIGHT) || (key == LEFT && head.direction != RIGHT && head.direction != LEFT) || (key == UP && head.direction != DOWN && head.direction != UP) || (key == DOWN && head.direction != UP && head.direction != DOWN))
 
     {
@@ -217,7 +185,7 @@ void load()
     {
         printf("%c", 177);
     }
-    getch();
+    Sleep(500);
 }
 void Down()
 {
@@ -239,7 +207,7 @@ void Down()
     if (!kbhit())
         head.y++;
 }
-void Delay(long double k)
+void Delay()
 {
     Score();
     long double i;
@@ -249,17 +217,17 @@ void Delay(long double k)
 
 void ExitGame()
 {
-    int i, check = 0;
+    int i;
     for (i = 4; i < length; i++)
     {
         if (body[0].x == body[i].x && body[0].y == body[i].y)
         {
-            check++;
+            life--;
+            if (life == 0)
+                Sleep(2000);
         }
-        if (i == length || check != 0)
-            break;
     }
-    if (head.x <= 10 || head.x >= 70 || head.y <= 10 || head.y >= 30 || check != 0)
+    if (head.x <= 10 || head.x >= 70 || head.y <= 10 || head.y >= 30)
     {
         life--;
         if (life >= 0)
@@ -270,13 +238,15 @@ void ExitGame()
             head.direction = RIGHT;
             Move();
         }
-        else
-        {
-            system("cls");
-            printf("All lives completed\nBetter Luck Next Time!!!\nPress any key to quit the game\n");
-            record();
-            exit(0);
-        }
+        if (life == 0)
+            Sleep(2000);
+    }
+    if (life == 0)
+    {
+        system("cls");
+        printf("All lives completed\nBetter Luck Next Time!!!\nPress any key to quit the game\n");
+        record();
+        exit(0);
     }
 }
 void Food()
@@ -288,21 +258,18 @@ void Food()
         a = time(0);
         srand(a);
         food.x = rand() % 70;
-        if (food.x <= 10)
-            food.x += 11;
         food.y = rand() % 30;
-        if (food.y <= 10)
 
-            food.y += 11;
+        (food.x <= 10) ? food.x += 11 : 1;
+        (food.y <= 10) ? food.y += 11 : 1;
     }
     else if (food.x == 0)
     {
         food.x = rand() % 70;
-        if (food.x <= 10)
-            food.x += 11;
+        (food.x <= 10) ? food.x += 11 : 1;
+
         food.y = rand() % 30;
-        if (food.y <= 10)
-            food.y += 11;
+        (food.y <= 10) ? food.y += 11 : 1;
     }
 }
 void Left()
@@ -347,6 +314,9 @@ void Right()
 }
 void Bend()
 {
+    if (!bend_no)
+        return;
+
     int i, j, diff;
     for (i = bend_no; i >= 0 && len < length; i--)
     {
@@ -470,13 +440,19 @@ void record()
     printf("Wanna see past records press 'y'\n");
     cha = getch();
     system("cls");
+
     if (cha == 'y')
     {
+        char fileContent[256];
         info = fopen("record.txt", "r");
-        do
+
+        if (info == NULL)
+            printf("Error in opening file!!!\n");
+
+        while (fgets(fileContent, sizeof(fileContent), info))
         {
-            putchar(c = getc(info));
-        } while (c != EOF);
+            printf("%s", fileContent);
+        }
     }
     fclose(info);
 }
